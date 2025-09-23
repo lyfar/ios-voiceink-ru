@@ -1,6 +1,6 @@
 # Privacy Policy for VoiceInk
 
-*Last updated: January 2025*
+*Last updated: September 2025*
 
 ## Overview
 
@@ -14,42 +14,58 @@ VoiceInk is a voice-to-text transcription app that helps you capture your though
 - **Storage**: Audio files are stored locally on your device and may be sent to third-party cloud services based on your chosen settings
 - **Retention**: You can delete individual recordings at any time by swiping in the notes list
 
-### API Keys
-- **What we collect**: If you choose to use cloud services, you must provide your own API keys
+### Default Service Data Processing
+- **VoiceInk Default Service**: When using our default transcription service (powered by Groq), we collect and process your audio data using our API keys
+- **Data Sharing**: Audio files are sent to Groq's servers for processing and may be temporarily stored there according to their privacy policy
+- **Purpose**: This allows you to use transcription features immediately without setup
+
+### API Keys for Custom Services
+- **What we collect**: If you choose to use other cloud services (Groq, Deepgram, Cerebras, Gemini), you must provide your own API keys
 - **How we use it**: API keys are used exclusively to authenticate with your chosen cloud services
 - **Storage**: API keys are stored locally on your device
 - **Purpose**: These keys enable the app to use third-party cloud services for transcription and text post-processing
 
 ## Third-Party Services
 
-VoiceInk integrates with several optional third-party cloud services. **You choose which services to use by providing your own API keys:**
+VoiceInk offers multiple processing options:
 
-### Cloud Services
-- **Groq**: Speech-to-text transcription
-- **OpenAI**: Speech-to-text transcription and text post-processing
+### Default Service (No Setup Required)
+- **VoiceInk Default**: Powered by Groq - works immediately without any API key setup
+- **Data Processing**: We manage the API keys and handle data processing on your behalf
+- **Privacy**: Your data is processed according to [Groq's Privacy Policy](https://groq.com/privacy-policy/)
+
+### Custom Cloud Services (Require Your API Keys)
+VoiceInk integrates with additional third-party cloud services. **For these services, you must provide your own API keys:**
+
+#### Cloud Services
+- **Groq**: Speech-to-text transcription (separate from default service)
 - **Deepgram**: Speech-to-text transcription
 - **Cerebras**: Text post-processing
 - **Google Gemini**: Text post-processing
 
-### Local Processing
+#### Local Processing
 - **Whisper.cpp**: Local on-device transcription (no data leaves your device)
 
 ### Data Sharing
-When you use cloud services:
-- Audio files are sent to your chosen transcription service
+**For Default Service:**
+- Audio files are sent to Groq's servers for processing
+- We manage the connection using our API keys
+
+**For Custom Cloud Services:**
+- Audio files are sent to your chosen transcription service using your API keys
 - Text content may be sent to your chosen AI service for post-processing
 - Each service has its own privacy policy - please review them:
   - [Groq Privacy Policy](https://groq.com/privacy-policy/)
-  - [OpenAI Privacy Policy](https://openai.com/privacy/)
   - [Deepgram Privacy Policy](https://deepgram.com/privacy/)
   - [Cerebras Privacy Policy](https://cerebras.ai/privacy-policy/)
   - [Google Privacy Policy](https://policies.google.com/privacy)
 
 ## Your Choices
 
-### Local vs Cloud Processing
-- You can choose to use local transcription (Whisper) which keeps all data on your device
-- Cloud services require your own API keys and are subject to third-party privacy policies
+### Processing Options
+- **Default Service**: Works immediately without any setup (powered by Groq)
+- **Local Processing**: Choose Whisper for complete privacy - all data stays on your device
+- **Custom Cloud Services**: Use your own API keys with other providers
 
 ### Data Control
 - Delete individual notes by swiping in the notes list
@@ -58,9 +74,10 @@ When you use cloud services:
 
 ## Data Security
 
-- All data processing occurs either locally on your device or through your own API keys with third-party cloud services
-- We do not collect, store, or have access to your audio recordings or transcriptions
-- All sensitive data remains on your device
+- **Default Service**: We manage secure connections to Groq's servers using our API keys
+- **Custom Services**: Data processing occurs through your own API keys with third-party cloud services
+- **Local Processing**: All data stays on your device and never leaves
+- We prioritize your privacy and only process data necessary for transcription functionality
 
 ## Children's Privacy
 
