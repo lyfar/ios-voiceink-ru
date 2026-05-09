@@ -1,0 +1,13 @@
+.DS_Store
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+build/
+DerivedData/
+Frameworks/sherpa-onnx.xcframework/
+Frameworks/sherpa-onnx-*-ios-*/
+*.xcarchive/
+*.ipa
+*.dSYM.zip
+*.dSYM/
+.swiftpm/

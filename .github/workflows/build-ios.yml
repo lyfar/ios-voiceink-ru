@@ -1,0 +1,202 @@
+name: Build signed iOS IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+
+    env:
+      SHERPA_ONNX_VERSION: v1.13.1
+      SCHEME: VoiceInk-ios
+      PROJECT: VoiceInk-ios.xcodeproj
+      ARCHIVE_PATH: ${{ github.workspace }}/build/VoiceInk-RU.xcarchive
+      IPA_DIR: ${{ github.workspace }}/build/ipa
+      TEAM_ID: UV7WFU64RB
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 16+
+        run: |
+          ls /Applications | grep -i Xcode
+          sudo xcode-select -switch /Applications/Xcode_16.app
+          xcodebuild -version
+
+      - name: Cache sherpa-onnx XCFramework
+        id: cache-sherpa
+        uses: actions/cache@v4
+        with:
+          path: Frameworks/sherpa-onnx.xcframework
+          key: sherpa-onnx-${{ env.SHERPA_ONNX_VERSION }}
+
+      - name: Download + extract sherpa-onnx (if not cached)
+        if: steps.cache-sherpa.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p Frameworks
+          curl -sSL -o /tmp/sherpa.tar.bz2 \
+            "https://github.com/k2-fsa/sherpa-onnx/releases/download/${SHERPA_ONNX_VERSION}/sherpa-onnx-${SHERPA_ONNX_VERSION}-ios-no-tts.tar.bz2"
+          tar -xjf /tmp/sherpa.tar.bz2 -C /tmp
+          cp -R /tmp/sherpa-onnx-${SHERPA_ONNX_VERSION}-ios-no-tts/sherpa-onnx.xcframework Frameworks/
+          cp /tmp/sherpa-onnx-${SHERPA_ONNX_VERSION}-ios-no-tts/SherpaOnnx-Bridging-Header.h VoiceInk-ios/
+
+      # ---------- Code signing setup -----------
+      # See SETUP.md for the full list of required secrets.
+
+      - name: Decode certs + profiles
+        env:
+          APPLE_CERT_P12_BASE64: ${{ secrets.APPLE_CERT_P12_BASE64 }}
+          APPLE_CERT_P12_PASSWORD: ${{ secrets.APPLE_CERT_P12_PASSWORD }}
+          APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+          APPLE_PROVISIONING_PROFILE_KEYBOARD_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_KEYBOARD_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          set -e
+          # 1. Cert into a fresh temp keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+
+          echo "$APPLE_CERT_P12_BASE64" | base64 -d > $RUNNER_TEMP/cert.p12
+          security import $RUNNER_TEMP/cert.p12 -k "$KEYCHAIN_PATH" -P "$APPLE_CERT_P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # 2. Provisioning profiles into ~/Library/MobileDevice/Provisioning Profiles
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILE_DIR"
+          echo "$APPLE_PROVISIONING_PROFILE_BASE64" | base64 -d > "$PROFILE_DIR/voiceink-ru.mobileprovision"
+          if [ -n "$APPLE_PROVISIONING_PROFILE_KEYBOARD_BASE64" ]; then
+            echo "$APPLE_PROVISIONING_PROFILE_KEYBOARD_BASE64" | base64 -d > "$PROFILE_DIR/voiceink-ru-keyboard.mobileprovision"
+          fi
+
+          ls -la "$PROFILE_DIR"
+
+      - name: Bump build number to run number
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" VoiceInk-ios/Info.plist || true
+
+      - name: xcodebuild archive
+        run: |
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE_PATH" \
+            -allowProvisioningUpdates \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM=$TEAM_ID \
+            archive
+
+      - name: Write exportOptions.plist (ad-hoc)
+        run: |
+          mkdir -p $IPA_DIR
+          cat > $IPA_DIR/exportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>          <string>ad-hoc</string>
+            <key>teamID</key>          <string>$TEAM_ID</string>
+            <key>signingStyle</key>    <string>automatic</string>
+            <key>compileBitcode</key>  <false/>
+            <key>thinning</key>        <string>&lt;none&gt;</string>
+            <key>uploadSymbols</key>   <false/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: xcodebuild -exportArchive (IPA)
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$IPA_DIR" \
+            -exportOptionsPlist "$IPA_DIR/exportOptions.plist" \
+            -allowProvisioningUpdates
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoiceInk-RU-IPA
+          path: ${{ env.IPA_DIR }}/*.ipa
+          if-no-files-found: error
+
+      # ---------- Deploy to beta.voice.egor.lol via Cloudflare R2 -----------
+      # Uses wrangler with CLOUDFLARE_API_TOKEN (no S3 access keys needed —
+      # R2 doesn't expose API-level S3 token creation). Bucket and custom
+      # domain (beta.voice.egor.lol) were created out-of-band.
+
+      - name: Push IPA + manifest to R2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: |
+          set -e
+          BUCKET=voice-ink-ru-beta
+          IPA=$(ls $IPA_DIR/*.ipa | head -1)
+          IPA_NAME="VoiceInk-RU-${{ github.run_number }}.ipa"
+          BUILD_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" VoiceInk-ios/Info.plist)
+          MARKETING_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" VoiceInk-ios/Info.plist 2>/dev/null || echo "1.0")
+
+          # Versioned + latest IPA (versioned can be cached forever, latest has short cache)
+          npx --yes wrangler@latest r2 object put "$BUCKET/ipa/$IPA_NAME" \
+            --file "$IPA" --content-type "application/octet-stream" \
+            --cache-control "public, max-age=31536000, immutable" --remote
+          npx --yes wrangler@latest r2 object put "$BUCKET/ipa/VoiceInk-RU-latest.ipa" \
+            --file "$IPA" --content-type "application/octet-stream" \
+            --cache-control "public, max-age=300" --remote
+
+          # OTA install manifest — points at the latest IPA. Short cache so
+          # the install link picks up new builds within minutes.
+          cat > /tmp/manifest.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>items</key>
+            <array>
+              <dict>
+                <key>assets</key>
+                <array>
+                  <dict>
+                    <key>kind</key><string>software-package</string>
+                    <key>url</key><string>https://beta.voice.egor.lol/ipa/VoiceInk-RU-latest.ipa</string>
+                  </dict>
+                </array>
+                <key>metadata</key>
+                <dict>
+                  <key>bundle-identifier</key><string>lol.egor.voiceink-ru</string>
+                  <key>bundle-version</key><string>$BUILD_VERSION</string>
+                  <key>kind</key><string>software</string>
+                  <key>title</key><string>VoiceInk RU</string>
+                </dict>
+              </dict>
+            </array>
+          </dict>
+          </plist>
+          EOF
+          npx --yes wrangler@latest r2 object put "$BUCKET/manifest.plist" \
+            --file /tmp/manifest.plist --content-type "application/xml" \
+            --cache-control "public, max-age=300" --remote
+
+          # Render + upload index.html with current build info.
+          sed -e "s/__BUILD__/$BUILD_VERSION/g" \
+              -e "s/__VERSION__/$MARKETING_VERSION/g" \
+              -e "s|__DATE__|$(date -u +%Y-%m-%dT%H:%M:%SZ)|g" \
+              site/index.html.template > /tmp/index.html
+          npx --yes wrangler@latest r2 object put "$BUCKET/index.html" \
+            --file /tmp/index.html --content-type "text/html; charset=utf-8" \
+            --cache-control "public, max-age=300" --remote
+
+      - name: Summary
+        run: |
+          echo "::notice title=IPA built::Build #${{ github.run_number }} pushed."
+          echo "::notice title=Install URL::https://beta.voice.egor.lol/"
+          echo "::notice title=Direct manifest::itms-services://?action=download-manifest&url=https://beta.voice.egor.lol/manifest.plist"

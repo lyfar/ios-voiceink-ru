@@ -37,7 +37,10 @@ struct SettingsView: View {
             
             Section(header: Text("Local Models")) {
                 NavigationLink(destination: LocalModelManagementView()) {
-                    Text("Manage Local Models")
+                    Text("Manage Whisper Models")
+                }
+                NavigationLink(destination: GigaAMSetupView()) {
+                    Text("GigaAM (русский, оффлайн)")
                 }
             }
             

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1a0c2e">
+  <title>VoiceInk RU — beta</title>
+  <style>
+    :root { color-scheme: dark; }
+    html, body {
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at top, #4d1a8c 0%, #1a0c2e 55%, #08040d 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro", system-ui, sans-serif;
+      color: #f4ecff;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: env(safe-area-inset-top, 0) 24px env(safe-area-inset-bottom, 0);
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      gap: 28px;
+      padding-top: 40px;
+      padding-bottom: 40px;
+    }
+    .icon {
+      width: 144px; height: 144px;
+      border-radius: 32px;
+      margin: 0 auto;
+      box-shadow: 0 12px 48px rgba(140, 90, 220, 0.45),
+                  0 4px 16px rgba(0, 0, 0, 0.5);
+      display: block;
+    }
+    h1 {
+      font-size: 32px; font-weight: 700;
+      text-align: center; margin: 0;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      text-align: center;
+      color: rgba(244, 236, 255, 0.7);
+      font-size: 15px;
+      margin: -16px 0 0 0;
+      line-height: 1.4;
+    }
+    .stat {
+      display: flex; justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 14px;
+    }
+    .stat:last-child { border-bottom: none; }
+    .stat span:first-child { color: rgba(244, 236, 255, 0.6); }
+    .stat span:last-child {
+      font-feature-settings: "tnum"; font-variant-numeric: tabular-nums;
+    }
+    .install {
+      display: block;
+      width: 100%; box-sizing: border-box;
+      padding: 18px;
+      background: linear-gradient(135deg, #b074ff 0%, #7c3aed 100%);
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 600; font-size: 17px;
+      border-radius: 14px;
+      letter-spacing: -0.01em;
+      box-shadow: 0 8px 24px rgba(140, 90, 220, 0.35);
+      transition: transform 0.15s ease;
+    }
+    .install:active { transform: scale(0.98); }
+    .secondary {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(244, 236, 255, 0.5);
+      line-height: 1.5;
+      padding: 0 8px;
+    }
+    .secondary a { color: rgba(244, 236, 255, 0.7); }
+    .help {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: rgba(244, 236, 255, 0.78);
+    }
+    .help b { color: #f4ecff; }
+    .badge {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 200, 90, 0.18);
+      color: #ffc85a;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <img class="icon" src="icon.png" alt="VoiceInk RU"/>
+
+    <div>
+      <h1>VoiceInk RU <span class="badge">beta</span></h1>
+      <p class="subtitle">
+        Голос → русский текст в любом приложении.<br>
+        Полностью офлайн. Через клавиатуру.
+      </p>
+    </div>
+
+    <div>
+      <div class="stat"><span>Сборка</span><span>0</span></div>
+      <div class="stat"><span>Версия</span><span>1.0-pre</span></div>
+      <div class="stat"><span>Модель</span><span>GigaAM v2 RNNT (241 МБ)</span></div>
+      <div class="stat"><span>Качество (RU WER)</span><span>8.42%</span></div>
+      <div class="stat"><span>Обновлено</span><span>2026-05-09T12:26:53Z</span></div>
+    </div>
+
+    <a class="install" href="itms-services://?action=download-manifest&url=https://beta.voice.egor.lol/manifest.plist">
+      📲 Установить на iPhone
+    </a>
+
+    <div class="help">
+      <b>Если iOS говорит «не удалось проверить разработчика»:</b><br>
+      Settings → General → VPN &amp; Device Management → выбери Egor Lyfar → Trust.
+      Это разовое действие.
+    </div>
+
+    <p class="secondary">
+      Source: <a href="https://github.com/lyfar/ios-voiceink-ru">github.com/lyfar/ios-voiceink-ru</a><br>
+      Fork of <a href="https://github.com/Beingpax/VoiceInk-iOS">Beingpax/VoiceInk-iOS</a> · GPL-3.0<br>
+      STT engine: <a href="https://github.com/salute-developers/GigaAM">GigaAM</a> (Sber, MIT) via
+      <a href="https://github.com/k2-fsa/sherpa-onnx">sherpa-onnx</a>
+    </p>
+  </main>
+</body>
+</html>

@@ -13,6 +13,8 @@ struct TranscriptionServiceFactory {
             return GroqTranscriptionService()
         case .local:
             return WhisperTranscriptionService()
+        case .gigaam:
+            return GigaAMTranscriptionService()
         }
     }
 }

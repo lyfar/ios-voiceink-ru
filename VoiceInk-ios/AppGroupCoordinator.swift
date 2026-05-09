@@ -6,7 +6,7 @@ final class AppGroupCoordinator {
     static let shared = AppGroupCoordinator()
     
     // MARK: - Constants
-    private let appGroupIdentifier = "group.com.prakashjoshipax.VoiceInk"
+    private let appGroupIdentifier = "group.lol.egor.voiceink-ru"
     
     // UserDefaults keys for persistent state
     private enum UserDefaultsKeys {
@@ -18,9 +18,9 @@ final class AppGroupCoordinator {
     
     // Darwin notification names for real-time communication
     private enum NotificationNames {
-        static let startRecording = "com.prakashjoshipax.VoiceInk.startRecording"
-        static let stopRecording = "com.prakashjoshipax.VoiceInk.stopRecording"
-        static let recordingStateChanged = "com.prakashjoshipax.VoiceInk.recordingStateChanged"
+        static let startRecording = "lol.egor.voiceink-ru.startRecording"
+        static let stopRecording = "lol.egor.voiceink-ru.stopRecording"
+        static let recordingStateChanged = "lol.egor.voiceink-ru.recordingStateChanged"
     }
     
     // MARK: - Properties
