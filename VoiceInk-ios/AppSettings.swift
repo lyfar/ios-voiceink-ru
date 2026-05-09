@@ -111,7 +111,7 @@ final class AppSettings: ObservableObject {
         case .deepgram: return deepgramAPIKey
         case .cerebras: return cerebrasAPIKey
         case .gemini: return geminiAPIKey
-        case .local: return "local" // Local transcription doesn't need an API key
+        case .gigaam: return "local" // GigaAM offline doesn't need an API key
         case .voiceink: return "" // TODO: Replace with actual VoiceInk API key
         }
     }
@@ -138,7 +138,7 @@ final class AppSettings: ObservableObject {
             geminiAPIKey = key
             // Reset verification status when key changes
             if geminiAPIKey != key { geminiKeyVerified = false }
-        case .local:
+        case .gigaam:
             break // Local provider doesn't use API keys
         case .voiceink:
             break // VoiceInk uses hardcoded API key
@@ -152,7 +152,7 @@ final class AppSettings: ObservableObject {
         case .deepgram: return deepgramKeyVerified && !deepgramAPIKey.isEmpty
         case .cerebras: return cerebrasKeyVerified && !cerebrasAPIKey.isEmpty
         case .gemini: return geminiKeyVerified && !geminiAPIKey.isEmpty
-        case .local: return LocalModelManager.shared.hasAvailableModel
+        case .gigaam: return GigaAMModelManager.shared.isReady
         case .voiceink: return true // VoiceInk uses hardcoded API key, always verified
         }
     }
@@ -164,7 +164,7 @@ final class AppSettings: ObservableObject {
         case .deepgram: deepgramKeyVerified = verified
         case .cerebras: cerebrasKeyVerified = verified
         case .gemini: geminiKeyVerified = verified
-        case .local: break // Local model status is handled by LocalModelManager
+        case .gigaam: break // GigaAM model status is handled by GigaAMModelManager
         case .voiceink: break // VoiceInk uses hardcoded API key, no verification needed
         }
     }

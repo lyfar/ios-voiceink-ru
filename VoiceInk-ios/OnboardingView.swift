@@ -101,151 +101,51 @@ struct WelcomeOnboardingView: View {
 
 struct ModelDownloadOnboardingView: View {
     @Binding var currentStep: Int
-    @StateObject private var modelManager = LocalModelManager.shared
-    @State private var hasStartedDownload = false
-    @State private var showError = false
-    @State private var showDownloadConfirmation = false
-    
-    var baseModel = WhisperModel.baseModel
-    
+    @StateObject private var manager = GigaAMModelManager.shared
+
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
-            
-            // Header
-            VStack(spacing: 24) {
-                Image(systemName: "cpu")
-                    .font(.system(size: 70))
-                    .foregroundColor(.accentColor)
-                
-                VStack(spacing: 12) {
-                    Text("Offline Transcription")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("Download a local model to transcribe audio even without an internet connection.")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-                }
-            }
-            
-            Spacer()
-            
-            // Model Info Card
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(baseModel.displayName)
-                                .font(.headline).fontWeight(.semibold)
-                            Text(baseModel.description)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        if baseModel.isDownloaded {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                                .font(.title)
-                        } else if modelManager.isDownloading[baseModel.id] == true {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle())
-                        } else {
-                            Image(systemName: "icloud.and.arrow.down")
-                                .foregroundColor(.accentColor)
-                                .font(.title)
-                        }
-                    }
-                    
-                    if modelManager.isDownloading[baseModel.id] == true {
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text("Downloading...")
-                                    .font(.caption)
-                                    .foregroundColor(.accentColor)
-                                Spacer()
-                                Text("\(Int((modelManager.downloadProgress[baseModel.id] ?? 0) * 100))%")
-                                    .font(.caption.monospacedDigit())
-                                    .foregroundColor(.accentColor)
-                            }
-                            
-                            ProgressView(value: modelManager.downloadProgress[baseModel.id] ?? 0)
-                                .progressViewStyle(LinearProgressViewStyle(tint: .accentColor))
-                        }
-                    }
-                }
-                .padding(16)
-                .background(Color(.secondarySystemGroupedBackground))
-                .cornerRadius(12)
-            }
-            .padding(.horizontal, 32)
-            
-            Spacer()
-            
-            // Bottom Action Buttons
             VStack(spacing: 16) {
-                if let isDownloading = modelManager.isDownloading[baseModel.id], isDownloading {
-                    Button("Downloading...") {}
-                        .buttonStyle(OnboardingButtonStyle())
-                        .disabled(true)
-                    
-                } else if baseModel.isDownloaded {
-                    Button("Continue") {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            currentStep = 2
-                        }
+                Image(systemName: manager.isReady ? "checkmark.seal.fill" : "arrow.down.circle.fill")
+                    .font(.system(size: 64))
+                    .foregroundColor(manager.isReady ? .green : .accentColor)
+                Text(manager.isReady ? "Модель готова" : "Скачать GigaAM-v2")
+                    .font(.title2).bold()
+                Text(manager.isReady
+                    ? "Распознавание русской речи работает полностью офлайн."
+                    : "241 МБ один раз. Качество на русском — лучшее открытое (8% WER).")
+                    .multilineTextAlignment(.center)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 32)
+                if manager.downloadingFile != nil {
+                    ProgressView(value: manager.downloadProgress)
+                        .padding(.horizontal, 32)
+                    if let f = manager.downloadingFile {
+                        Text(f).font(.caption).foregroundColor(.secondary)
                     }
-                    .buttonStyle(OnboardingButtonStyle())
-                } else {
-                    Button(action: {
-                        showDownloadConfirmation = true
-                    }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "arrow.down.circle.fill")
-                            Text("Download Model (\(baseModel.size))")
-                        }
-                    }
-                    .buttonStyle(OnboardingButtonStyle())
+                }
+                if let err = manager.lastError {
+                    Text(err).font(.caption).foregroundColor(.red).padding(.horizontal, 32)
                 }
             }
-            .padding(.horizontal, 32)
-            .padding(.bottom, 50)
+            Spacer()
+            VStack(spacing: 12) {
+                if !manager.isReady && manager.downloadingFile == nil {
+                    Button { Task { await manager.downloadAll() } } label: {
+                        Text("Скачать (241 МБ)").font(.headline).frame(maxWidth: .infinity).padding()
+                            .background(Color.accentColor).foregroundColor(.white).cornerRadius(12)
+                    }.padding(.horizontal, 32)
+                }
+                Button { withAnimation { currentStep += 1 } } label: {
+                    Text(manager.isReady ? "Продолжить" : "Пропустить (можно скачать позже)")
+                        .font(.headline).frame(maxWidth: .infinity).padding()
+                        .background(Color.gray.opacity(0.15)).foregroundColor(.primary).cornerRadius(12)
+                }.padding(.horizontal, 32)
+            }.padding(.bottom, 40)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
-        .alert("Download Error", isPresented: $showError) {
-            Button("OK") { showError = false }
-        } message: {
-            Text(modelManager.downloadError ?? "An unknown error occurred.")
-        }
-        .alert("Download Model", isPresented: $showDownloadConfirmation) {
-            Button("Download") {
-                downloadModel()
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("To enable offline transcription, a \(baseModel.size) model needs to be downloaded. This may incur data charges if you are not on Wi-Fi.")
-        }
-        .onChange(of: modelManager.downloadError) { error in
-            if error != nil {
-                showError = true
-            }
-        }
-    }
-    
-    private func downloadModel() {
-        Task {
-            do {
-                hasStartedDownload = true
-                try await modelManager.downloadModel(baseModel)
-            } catch {
-                print("Download failed: \(error)")
-            }
-        }
+        .task { await manager.refreshAvailability() }
     }
 }
 

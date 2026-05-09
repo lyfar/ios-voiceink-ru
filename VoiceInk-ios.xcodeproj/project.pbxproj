@@ -437,6 +437,11 @@
 					"$(SRCROOT)/Frameworks",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Frameworks/sherpa-onnx.xcframework/Headers",
+					"$(SRCROOT)/Frameworks/onnxruntime.xcframework/Headers",
+				);
 				INFOPLIST_FILE = "VoiceInk-ios/Info.plist";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app records audio to transcribe into notes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -480,6 +485,11 @@
 					"$(SRCROOT)/Frameworks",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Frameworks/sherpa-onnx.xcframework/Headers",
+					"$(SRCROOT)/Frameworks/onnxruntime.xcframework/Headers",
+				);
 				INFOPLIST_FILE = "VoiceInk-ios/Info.plist";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app records audio to transcribe into notes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

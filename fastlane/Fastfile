@@ -444,3 +444,112 @@ end
       end
     end
   end
+
+  lane :test_appgroup_post do
+    require "json"; require "net/http"
+    Spaceship::ConnectAPI.token = api_token
+    jwt = Spaceship::ConnectAPI.token.text
+    headers = { "Authorization" => "Bearer #{jwt}", "Content-Type" => "application/json" }
+
+    UI.message "probe GET /v1/appGroups..."
+    r = Net::HTTP.start("api.appstoreconnect.apple.com", 443, use_ssl: true) do |h|
+      req = Net::HTTP::Get.new("/v1/appGroups?filter[identifier]=group.lol.egor.voiceink-ru")
+      headers.each { |k,v| req[k] = v }
+      h.request(req)
+    end
+    UI.message "  #{r.code}: #{r.body[0..400]}"
+
+    if r.body.include?('"data":[]')
+      UI.message "POST /v1/appGroups..."
+      payload = { data: { type: "appGroups",
+                          attributes: { identifier: "group.lol.egor.voiceink-ru",
+                                        name: "VoiceInk RU App Group" } } }
+      r = Net::HTTP.start("api.appstoreconnect.apple.com", 443, use_ssl: true) do |h|
+        req = Net::HTTP::Post.new("/v1/appGroups")
+        headers.each { |k,v| req[k] = v }
+        req.body = payload.to_json
+        h.request(req)
+      end
+      UI.message "  #{r.code}: #{r.body[0..600]}"
+    end
+  end
+
+  lane :enable_app_groups do
+    Spaceship::ConnectAPI.token = api_token
+    [APP_IDENTIFIER, KEYBOARD_IDENTIFIER].each do |ident|
+      bundle = Spaceship::ConnectAPI::BundleId.find(ident)
+      next unless bundle
+      caps = Array(bundle.bundle_id_capabilities)
+      has_cap = caps.any? { |c| c.capability_type == "APP_GROUPS" }
+      if has_cap
+        UI.message "APP_GROUPS already enabled on #{ident}"
+      else
+        Spaceship::ConnectAPI.client.post_bundle_id_capability(
+          bundle_id_id: bundle.id, capability_type: "APP_GROUPS",
+        )
+        UI.success "Enabled APP_GROUPS capability on #{ident}"
+      end
+    end
+  end
+
+  lane :probe_appgroup_via_capabilities do
+    require "json"; require "net/http"
+    Spaceship::ConnectAPI.token = api_token
+    jwt = Spaceship::ConnectAPI.token.text
+    headers = { "Authorization" => "Bearer #{jwt}", "Content-Type" => "application/json" }
+
+    # Look up bundle id
+    bundle = Spaceship::ConnectAPI::BundleId.find(APP_IDENTIFIER)
+    UI.message "bundle id internal id: #{bundle.id}"
+
+    # Get its capabilities with includes
+    UI.message "GET /v1/bundleIds/#{bundle.id}/capabilities?include=appGroups"
+    r = Net::HTTP.start("api.appstoreconnect.apple.com", 443, use_ssl: true) do |h|
+      req = Net::HTTP::Get.new("/v1/bundleIds/#{bundle.id}/capabilities?include=appGroups")
+      headers.each { |k,v| req[k] = v }
+      h.request(req)
+    end
+    UI.message "  #{r.code}: #{r.body[0..800]}"
+    UI.message ""
+
+    # Try GET on the capability resource directly
+    UI.message "GET /v1/bundleIdCapabilities (filter by bundle):"
+    r = Net::HTTP.start("api.appstoreconnect.apple.com", 443, use_ssl: true) do |h|
+      req = Net::HTTP::Get.new("/v1/bundleIdCapabilities?filter[bundleId]=#{bundle.id}&include=appGroups")
+      headers.each { |k,v| req[k] = v }
+      h.request(req)
+    end
+    UI.message "  #{r.code}: #{r.body[0..800]}"
+  end
+
+  lane :probe_api_key_role do
+    require "json"; require "net/http"
+    Spaceship::ConnectAPI.token = api_token
+    jwt = Spaceship::ConnectAPI.token.text
+    headers = { "Authorization" => "Bearer #{jwt}", "Content-Type" => "application/json" }
+
+    UI.message "Token kid (key_id): #{Spaceship::ConnectAPI.token.key_id}"
+    UI.message "Token issuer_id: #{Spaceship::ConnectAPI.token.issuer_id}"
+    UI.message "Token text decoded payload:"
+    body = Spaceship::ConnectAPI.token.text.split('.')[1]
+    require "base64"
+    payload = JSON.parse(Base64.decode64(body + "==="))
+    UI.message payload.inspect
+  end
+
+  lane :fix_header_paths do
+    require "xcodeproj"
+    proj = Xcodeproj::Project.open(File.join(PROJECT_ROOT, "VoiceInk-ios.xcodeproj"))
+    main_target = proj.targets.find { |t| t.name == "VoiceInk-ios" }
+    main_target.build_configurations.each do |cfg|
+      paths = Array(cfg.build_settings["HEADER_SEARCH_PATHS"] || ["$(inherited)"])
+      paths += [
+        "$(SRCROOT)/Frameworks/sherpa-onnx.xcframework/Headers",
+        "$(SRCROOT)/Frameworks/onnxruntime.xcframework/Headers",
+      ]
+      cfg.build_settings["HEADER_SEARCH_PATHS"] = paths.uniq
+      UI.message "set HEADER_SEARCH_PATHS for #{cfg.name}: #{paths}"
+    end
+    proj.save
+    UI.success "Updated header search paths"
+  end

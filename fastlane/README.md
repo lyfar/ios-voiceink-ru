@@ -69,6 +69,46 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 
 
+### test_appgroup_post
+
+```sh
+[bundle exec] fastlane test_appgroup_post
+```
+
+
+
+### enable_app_groups
+
+```sh
+[bundle exec] fastlane enable_app_groups
+```
+
+
+
+### probe_appgroup_via_capabilities
+
+```sh
+[bundle exec] fastlane probe_appgroup_via_capabilities
+```
+
+
+
+### probe_api_key_role
+
+```sh
+[bundle exec] fastlane probe_api_key_role
+```
+
+
+
+### fix_header_paths
+
+```sh
+[bundle exec] fastlane fix_header_paths
+```
+
+
+
 ----
 
 
