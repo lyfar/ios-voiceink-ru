@@ -53,9 +53,9 @@ Bundle IDs are already set:
 - Keyboard ext: `lol.egor.voiceink-ru.keyboard`
 - Tests: `lol.egor.voiceink-ru.tests` / `lol.egor.voiceink-ru.uitests`
 
-Team ID is `UV7WFU64RB` (Egor Lyfar Apple Dev). If you sign as someone else:
+Team ID is `5C5L6DFJGS` (Egor Lyfar Apple Dev). If you sign as someone else:
 ```
-sed -i '' 's|UV7WFU64RB|<YOUR_TEAM_ID>|g' VoiceInk-ios.xcodeproj/project.pbxproj
+sed -i '' 's|5C5L6DFJGS|<YOUR_TEAM_ID>|g' VoiceInk-ios.xcodeproj/project.pbxproj
 ```
 
 App Group `group.lol.egor.voiceink-ru` — add it in Apple Developer Portal under your team, then re-sync provisioning profiles.
@@ -89,7 +89,7 @@ Or hit **Cmd+R** in Xcode with the iPhone connected.
 
 Required GH secrets (Settings → Secrets → Actions):
 - `APPLE_CERT_P12_BASE64` — exported developer cert .p12 file, base64-encoded
-  - Export from Keychain Access → "Apple Development: Egor Lyfar (UV7WFU64RB)" → right click → Export → .p12 with password
+  - Export from Keychain Access → "Apple Development: Egor Lyfar (5C5L6DFJGS)" → right click → Export → .p12 with password
   - `base64 -i cert.p12 | pbcopy` → paste into the secret
 - `APPLE_CERT_P12_PASSWORD` — password you set when exporting the .p12
 - `APPLE_PROVISIONING_PROFILE_BASE64` — ad-hoc provisioning profile, base64

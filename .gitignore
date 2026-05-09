@@ -5,9 +5,13 @@ xcuserdata/
 build/
 DerivedData/
 Frameworks/sherpa-onnx.xcframework/
+Frameworks/onnxruntime.xcframework/
 Frameworks/sherpa-onnx-*-ios-*/
 *.xcarchive/
 *.ipa
 *.dSYM.zip
 *.dSYM/
 .swiftpm/
+fastlane/report.xml
+fastlane/Frameworks/
+fastlane/build/

@@ -16,7 +16,7 @@ jobs:
       PROJECT: VoiceInk-ios.xcodeproj
       ARCHIVE_PATH: ${{ github.workspace }}/build/VoiceInk-RU.xcarchive
       IPA_DIR: ${{ github.workspace }}/build/ipa
-      TEAM_ID: UV7WFU64RB
+      TEAM_ID: 5C5L6DFJGS
 
     steps:
       - uses: actions/checkout@v4

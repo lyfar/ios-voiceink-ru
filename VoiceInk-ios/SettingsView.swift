@@ -36,9 +36,6 @@ struct SettingsView: View {
             }
             
             Section(header: Text("Local Models")) {
-                NavigationLink(destination: LocalModelManagementView()) {
-                    Text("Manage Whisper Models")
-                }
                 NavigationLink(destination: GigaAMSetupView()) {
                     Text("GigaAM (русский, оффлайн)")
                 }
@@ -116,10 +113,11 @@ struct SettingsView: View {
             try? FileManager.default.removeItem(at: recordingsDir)
         }
 
-        // 3) Delete local model directory
-        let modelsDir = LocalModelManager.modelsDirectory
-        if FileManager.default.fileExists(atPath: modelsDir.path) {
-            try? FileManager.default.removeItem(at: modelsDir)
+        // 3) Delete GigaAM model directory
+        let docsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let gigaamDir = docsURL.appendingPathComponent("GigaAM-v2-rnnt")
+        if FileManager.default.fileExists(atPath: gigaamDir.path) {
+            try? FileManager.default.removeItem(at: gigaamDir)
         }
 
         // 4) Clear caches and tmp contents (best-effort)

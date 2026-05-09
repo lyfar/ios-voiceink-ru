@@ -11,7 +11,6 @@ enum Provider: String, CaseIterable, Codable, Identifiable {
     case deepgram = "Deepgram"
     case cerebras = "Cerebras"
     case gemini = "Gemini"
-    case local = "Local (Whisper)"
     case gigaam = "GigaAM (Russian, on-device)"
     case voiceink = "VoiceInk"
 
@@ -24,7 +23,6 @@ enum Provider: String, CaseIterable, Codable, Identifiable {
         case .deepgram: return URL(string: "https://api.deepgram.com")!
         case .cerebras: return URL(string: "https://api.cerebras.ai")!
         case .gemini: return URL(string: "https://generativelanguage.googleapis.com/v1beta/openai")!
-        case .local: return URL(string: "http://localhost")! // Not used for local transcription
         case .gigaam: return URL(string: "http://localhost")! // Not used — model lives in Documents/
         case .voiceink: return URL(string: "https://api.groq.com/openai")! // VoiceInk uses Groq backend
         }
@@ -37,7 +35,6 @@ enum Provider: String, CaseIterable, Codable, Identifiable {
         case .deepgram: return URL(string: "https://console.deepgram.com/project/keys")!
         case .cerebras: return URL(string: "https://cloud.cerebras.ai/platform")!
         case .gemini: return URL(string: "https://aistudio.google.com/app/apikey")!
-        case .local: return URL(string: "https://github.com/ggerganov/whisper.cpp")! // Whisper.cpp GitHub page
         case .gigaam: return URL(string: "https://github.com/salute-developers/GigaAM")! // GigaAM GitHub page
         case .voiceink: return URL(string: "https://voiceink.app")! // VoiceInk website
         }
@@ -92,12 +89,7 @@ enum Provider: String, CaseIterable, Codable, Identifiable {
                 "gemini-1.5-flash",
                 "gemini-1.5-pro"
             ]
-        case (.local, .transcription):
-            return [
-                "base"
-            ]
-        case (.local, .postProcessing):
-            return [] // Local transcription doesn't support post-processing
+        
         case (.gigaam, .transcription):
             return ["gigaam-v2-rnnt"] // single hardcoded option (8.42% Russian WER)
         case (.gigaam, .postProcessing):
